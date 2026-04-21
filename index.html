@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Is Hormuz Opened? — Live Status</title>
+<meta name="description" content="Real-time status of the Strait of Hormuz — is it open or closed to tanker traffic? Live ship tracking, oil prices, and latest news.">
+<meta property="og:title" content="IsHormuzOpened.info — Live Status">
+<meta property="og:description" content="Is the Strait of Hormuz open to tanker traffic right now?">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#000000">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --red: #e84040;
+    --red-glow: rgba(232,64,64,0.18);
+    --red-dim: rgba(232,64,64,0.08);
+    --green: #3cd47a;
+    --green-glow: rgba(60,212,122,0.18);
+    --amber: #f0a500;
+    --amber-dim: rgba(240,165,0,0.1);
+    --bg: #000;
+    --surface: #080808;
+    --border: #1a1a1a;
+    --border-mid: #252525;
+    --text-primary: #f0f0f0;
+    --text-secondary: #c0c0c0;
+    --text-muted: #909090;
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+    --font-body: 'IBM Plex Sans', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ─── SCAN-LINE OVERLAY ─── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.04) 2px,
+      rgba(0,0,0,0.04) 4px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 32px;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--text-secondary);
+    letter-spacing: 0.05em;
+  }
+  .nav-logo span { color: var(--red); }
+  .nav-links { display: flex; gap: 24px; }
+  .nav-links a {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-muted);
+    text-decoration: none;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--text-primary); }
+  .live-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--red);
+    border: 1px solid rgba(232,64,64,0.3);
+    padding: 4px 10px;
+    border-radius: 2px;
+    letter-spacing: 0.1em;
+  }
+  .live-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--red);
+    animation: blink 1.4s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+  /* ─── HERO ─── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6rem 2rem 4rem;
+    text-align: center;
+    position: relative;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Radial glow behind answer */
+  .hero-glow {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -55%);
+    width: 600px; height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, var(--red-glow) 0%, transparent 70%);
+    pointer-events: none;
+    transition: background 0.8s ease;
+  }
+  .hero-glow.yes { background: radial-gradient(ellipse, var(--green-glow) 0%, transparent 70%); }
+
+  .hero-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-muted);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.8s ease both;
+  }
+
+  .hero-question {
+    font-family: var(--font-mono);
+    font-size: clamp(18px, 2.5vw, 24px);
+    color: var(--text-secondary);
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    margin-bottom: 1rem;
+    animation: fadeUp 0.9s ease both;
+    animation-delay: 0.1s;
+  }
+
+  .hero-answer {
+    font-family: var(--font-display);
+    font-size: clamp(100px, 22vw, 240px);
+    line-height: 0.9;
+    letter-spacing: 0.02em;
+    color: var(--red);
+    transition: color 0.8s ease;
+    animation: fadeUp 1s ease both, glowPulse 3s ease-in-out infinite;
+    animation-delay: 0.2s, 1s;
+    position: relative;
+    z-index: 2;
+  }
+  .hero-answer.yes {
+    color: var(--green);
+    animation: fadeUp 1s ease both, glowPulseGreen 3s ease-in-out infinite;
+  }
+  @keyframes glowPulse {
+    0%,100% { text-shadow: 0 0 60px rgba(232,64,64,0.3), 0 0 120px rgba(232,64,64,0.1); }
+    50% { text-shadow: 0 0 80px rgba(232,64,64,0.5), 0 0 160px rgba(232,64,64,0.2); }
+  }
+  @keyframes glowPulseGreen {
+    0%,100% { text-shadow: 0 0 60px rgba(60,212,122,0.3); }
+    50% { text-shadow: 0 0 80px rgba(60,212,122,0.5); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-status {
+    margin-top: 2rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--red);
+    border: 1px solid rgba(232,64,64,0.35);
+    padding: 7px 16px;
+    border-radius: 2px;
+    animation: fadeUp 1s ease both;
+    animation-delay: 0.4s;
+    transition: color 0.8s, border-color 0.8s;
+  }
+  .hero-status.yes { color: var(--green); border-color: rgba(60,212,122,0.35); }
+  .status-dot-hero {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--red);
+    animation: blink 1.4s infinite;
+    transition: background 0.8s;
+  }
+  .hero-status.yes .status-dot-hero { background: var(--green); }
+
+  .hero-description {
+    margin-top: 1.5rem;
+    max-width: 540px;
+    font-size: 15px;
+    color: var(--text-muted);
+    line-height: 1.75;
+    font-family: var(--font-mono);
+    font-weight: 400;
+    animation: fadeUp 1s ease both;
+    animation-delay: 0.5s;
+  }
+
+  .hero-stats {
+    margin-top: 2.5rem;
+    display: flex;
+    gap: 2rem;
+    animation: fadeUp 1s ease both;
+    animation-delay: 0.6s;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .hero-stat {
+    text-align: center;
+  }
+  .hero-stat-value {
+    font-family: var(--font-display);
+    font-size: 36px;
+    color: var(--text-secondary);
+    line-height: 1;
+  }
+  .hero-stat-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .scroll-hint {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    animation: fadeUp 1.2s ease both, bounceY 2s ease-in-out infinite;
+    animation-delay: 1.2s, 2s;
+  }
+  .scroll-arrow {
+    width: 1px; height: 32px;
+    background: linear-gradient(to bottom, var(--text-muted), transparent);
+  }
+  @keyframes bounceY {
+    0%,100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(6px); }
+  }
+
+  /* ─── SECTIONS ─── */
+  .section {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 4rem 2rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 1.5rem;
+  }
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 28px;
+    color: var(--text-primary);
+    letter-spacing: 0.05em;
+  }
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ─── MAP ─── */
+  .map-container {
+    border: 1px solid var(--border-mid);
+    border-radius: 4px;
+    overflow: hidden;
+    background: #050505;
+  }
+  #leaflet-map { width: 100%; height: 460px; }
+  .map-footer {
+    padding: 10px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border);
+  }
+  .map-source {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+  }
+  .map-alert {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--red);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  /* ─── NEWS FEED ─── */
+  .news-container {
+    border: 1px solid var(--border-mid);
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--surface);
+  }
+  .news-topbar {
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #060606;
+  }
+  .x-logo {
+    width: 15px; height: 15px;
+    fill: var(--text-secondary);
+  }
+  .news-topbar-label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
+  .news-topbar-tag {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    border-radius: 2px;
+  }
+  .news-list {
+    max-height: 420px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #222 transparent;
+  }
+  .news-list::-webkit-scrollbar { width: 4px; }
+  .news-list::-webkit-scrollbar-track { background: transparent; }
+  .news-list::-webkit-scrollbar-thumb { background: #222; border-radius: 2px; }
+  .news-post {
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .news-post:last-child { border-bottom: none; }
+  .news-post:hover { background: rgba(255,255,255,0.02); }
+  .news-post-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 7px;
+  }
+  .news-avatar {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--border-mid);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .news-name { font-family: var(--font-mono); font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+  .news-handle { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); }
+  .news-timestamp { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-left: auto; }
+  .news-body { font-size: 14px; color: #d8d8d8; line-height: 1.65; }
+  .news-tags { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .news-tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #5ab0f8;
+    padding: 2px 7px;
+    background: rgba(78,161,243,0.08);
+    border-radius: 2px;
+  }
+  .news-tag.danger { color: #f06060; background: rgba(232,64,64,0.1); }
+  .news-tag.warn { color: #f5b840; background: rgba(240,165,0,0.1); }
+
+  /* ─── OIL CHART ─── */
+  .chart-container {
+    border: 1px solid var(--border-mid);
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--surface);
+    padding: 1.5rem;
+  }
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .chart-price {
+    font-family: var(--font-display);
+    font-size: 52px;
+    color: var(--amber);
+    line-height: 1;
+    letter-spacing: 0.03em;
+  }
+  .chart-price-sub {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    letter-spacing: 0.05em;
+  }
+  .chart-change-pos { color: var(--red); font-family: var(--font-mono); font-size: 13px; }
+  .chart-change-label { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+  .chart-inner {
+    position: relative;
+    width: 100%;
+    height: 260px;
+  }
+  .chart-note {
+    margin-top: 10px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    text-align: right;
+    letter-spacing: 0.04em;
+  }
+
+  /* ─── TIMELINE ─── */
+  .timeline { list-style: none; position: relative; padding-left: 20px; }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 6px; top: 0; bottom: 0;
+    width: 1px;
+    background: var(--border-mid);
+  }
+  .tl-item {
+    position: relative;
+    padding: 0 0 1.5rem 1.5rem;
+  }
+  .tl-item::before {
+    content: '';
+    position: absolute;
+    left: -8px; top: 5px;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--border-mid);
+    border: 1px solid var(--text-muted);
+  }
+  .tl-item.critical::before { background: var(--red); border-color: var(--red); }
+  .tl-item.warning::before { background: var(--amber); border-color: var(--amber); }
+  .tl-date {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+  .tl-text { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+
+  /* ─── FOOTER ─── */
+  footer {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2.5rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .footer-logo {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
+  .footer-logo span { color: var(--red); }
+  .footer-note {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+    line-height: 1.8;
+    text-align: right;
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 640px) {
+    nav { padding: 12px 16px; }
+    .nav-links { display: none; }
+    .section { padding: 3rem 1rem; }
+    .hero-stats { gap: 1.5rem; }
+    .chart-price { font-size: 36px; }
+    footer { flex-direction: column; text-align: center; }
+    .footer-note { text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Is<span>Hormuz</span>Opened.info</div>
+  <div class="nav-links">
+    <a href="#map">Live Map</a>
+    <a href="#news">News</a>
+    <a href="#oil">Oil Price</a>
+    <a href="#timeline">Timeline</a>
+  </div>
+  <div class="live-pill">
+    <span class="live-dot"></span>
+    LIVE
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow" id="hero-glow"></div>
+
+  <p class="hero-eyebrow">Strait of Hormuz — Real-Time Status</p>
+  <p class="hero-question">Is the Strait of Hormuz open to tanker traffic?</p>
+
+  <div class="hero-answer" id="main-answer">NO</div>
+
+  <div class="hero-status" id="hero-status">
+    <span class="status-dot-hero" id="status-dot"></span>
+    <span id="status-text">Iran IRGC blockade active — tankers fired upon</span>
+  </div>
+
+  <p class="hero-description" id="hero-desc">
+    Iran's Revolutionary Guard Corps declared the strait closed on Mar 2. Multiple tankers
+    have been fired upon. US Navy blockade of Iranian ports in effect. Diplomatic talks in
+    Islamabad failed April 12. Last update: April 21, 2026.
+  </p>
+
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <div class="hero-stat-value" style="color:var(--red)">~90%</div>
+      <div class="hero-stat-label">traffic drop</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-value" style="color:var(--amber)">21+</div>
+      <div class="hero-stat-label">ships attacked</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-value">20%</div>
+      <div class="hero-stat-label">world oil trade</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-value" style="color:var(--red)">52</div>
+      <div class="hero-stat-label">days closed</div>
+    </div>
+  </div>
+
+  <div class="scroll-hint">
+    <span>scroll</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</section>
+
+<!-- MAP SECTION -->
+<section class="section" id="map">
+  <div class="section-header">
+    <span class="section-label">01</span>
+    <h2 class="section-title">LIVE VESSEL TRAFFIC</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="map-container">
+    <div id="leaflet-map" style="width:100%;height:460px;"></div>
+    <div class="map-footer">
+      <span class="map-source">MAP: OPENSTREETMAP · VESSEL DATA: MARINETRAFFIC AIS (INDICATIVE)</span>
+      <span class="map-alert">
+        <span class="live-dot" style="width:5px;height:5px;"></span>
+        TRAFFIC SEVERELY REDUCED SINCE FEB 28, 2026
+      </span>
+    </div>
+  </div>
+</section>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function() {
+  const map = L.map('leaflet-map', {
+    center: [26.5, 56.3],
+    zoom: 7,
+    zoomControl: true,
+    attributionControl: true
+  });
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+    subdomains: 'abcd',
+    maxZoom: 19
+  }).addTo(map);
+
+  // Strait of Hormuz closure zone polygon
+  const closureZone = L.polygon([
+    [26.0, 55.8], [27.2, 55.8], [27.5, 56.8],
+    [26.8, 57.8], [25.8, 57.5], [25.2, 56.5], [25.4, 55.9]
+  ], {
+    color: '#e84040',
+    weight: 2,
+    opacity: 0.8,
+    fillColor: '#e84040',
+    fillOpacity: 0.12,
+    dashArray: '6 4'
+  }).addTo(map);
+  closureZone.bindPopup('<b style="color:#e84040">CLOSED ZONE</b><br>Iran IRGC blockade active<br>All commercial transit prohibited');
+
+  // Danger zone label
+  const closureLabel = L.divIcon({
+    className: '',
+    html: '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:#e84040;background:rgba(0,0,0,0.75);padding:3px 7px;border:1px solid rgba(232,64,64,0.5);border-radius:2px;white-space:nowrap;letter-spacing:0.08em;">⚠ CLOSED — IRGC BLOCKADE</div>',
+    iconAnchor: [90, 10]
+  });
+  L.marker([26.6, 56.5], { icon: closureLabel }).addTo(map);
+
+  // US Navy blockade zone (western approach)
+  const navyZone = L.polygon([
+    [24.5, 58.5], [25.8, 57.8], [26.0, 59.5], [24.8, 60.0]
+  ], {
+    color: '#4ea1f3',
+    weight: 1.5,
+    opacity: 0.7,
+    fillColor: '#4ea1f3',
+    fillOpacity: 0.08,
+    dashArray: '4 4'
+  }).addTo(map);
+  navyZone.bindPopup('<b style="color:#4ea1f3">US NAVY BLOCKADE</b><br>Iranian port approach zone<br>US Navy enforcement active');
+
+  const navyLabel = L.divIcon({
+    className: '',
+    html: '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:#4ea1f3;background:rgba(0,0,0,0.75);padding:3px 7px;border:1px solid rgba(78,161,243,0.4);border-radius:2px;white-space:nowrap;letter-spacing:0.08em;">US NAVY PATROL</div>',
+    iconAnchor: [50, 10]
+  });
+  L.marker([25.2, 59.2], { icon: navyLabel }).addTo(map);
+
+  // Port/city markers
+  const ports = [
+    { lat: 27.18, lng: 56.27, name: 'Bandar Abbas', country: 'Iran', status: 'blocked', note: 'Main Iranian export terminal — US blockade active' },
+    { lat: 26.19, lng: 50.60, name: 'Bahrain', country: 'Bahrain', status: 'open', note: 'US 5th Fleet HQ — operational' },
+    { lat: 25.28, lng: 51.55, name: 'Doha', country: 'Qatar', status: 'open', note: 'LNG export hub — rerouting via Oman' },
+    { lat: 24.46, lng: 54.35, name: 'Abu Dhabi', country: 'UAE', status: 'open', note: 'Fujairah bypass route active (outside strait)' },
+    { lat: 23.62, lng: 58.59, name: 'Muscat', country: 'Oman', status: 'open', note: 'Duqm/Salalah bypass ports handling overflow' },
+    { lat: 29.36, lng: 48.0,  name: 'Kuwait City', country: 'Kuwait', status: 'closed', note: 'Export blocked — strait closure' },
+    { lat: 26.42, lng: 50.09, name: 'Dammam / Jubail', country: 'Saudi Arabia', status: 'closed', note: 'Saudi exports severely curtailed' },
+  ];
+
+  ports.forEach(p => {
+    const color = p.status === 'blocked' ? '#e84040' : p.status === 'closed' ? '#f0a500' : '#3cd47a';
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="width:10px;height:10px;border-radius:50%;background:${color};border:2px solid rgba(0,0,0,0.5);box-shadow:0 0 6px ${color}"></div>`,
+      iconAnchor: [5, 5]
+    });
+    L.marker([p.lat, p.lng], { icon }).addTo(map)
+      .bindPopup(`<b style="color:${color}">${p.name}</b> <span style="color:#999;font-size:11px">${p.country}</span><br><span style="font-size:12px;color:#ccc">${p.note}</span>`);
+
+    const label = L.divIcon({
+      className: '',
+      html: `<div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:${color};white-space:nowrap;padding-left:14px;margin-top:-8px;">${p.name}</div>`,
+      iconAnchor: [0, 0]
+    });
+    L.marker([p.lat, p.lng], { icon: label }).addTo(map);
+  });
+
+  // Tanker attack spots
+  const attacks = [
+    { lat: 26.7, lng: 56.9, label: 'Attack #1' },
+    { lat: 26.3, lng: 57.1, label: 'Attack #2' },
+    { lat: 25.6, lng: 57.6, label: 'Attack #3' },
+  ];
+  attacks.forEach(a => {
+    const icon = L.divIcon({
+      className: '',
+      html: '<div style="font-size:14px;line-height:1;">💥</div>',
+      iconAnchor: [7, 7]
+    });
+    L.marker([a.lat, a.lng], { icon }).addTo(map)
+      .bindPopup(`<b style="color:#e84040">${a.label}</b><br>Tanker fired upon — IRGC`);
+  });
+
+  // Legend
+  const legend = L.control({ position: 'bottomleft' });
+  legend.onAdd = function() {
+    const div = L.DomUtil.create('div');
+    div.innerHTML = `
+      <div style="background:rgba(0,0,0,0.85);border:1px solid #2a2a2a;border-radius:4px;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1.8;color:#999;">
+        <div style="margin-bottom:4px;color:#666;letter-spacing:0.1em;text-transform:uppercase;">LEGEND</div>
+        <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#e84040;margin-right:6px;vertical-align:middle;"></span>Closed / Blocked port</div>
+        <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f0a500;margin-right:6px;vertical-align:middle;"></span>Restricted port</div>
+        <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#3cd47a;margin-right:6px;vertical-align:middle;"></span>Open port</div>
+        <div style="margin-top:4px;"><span style="color:#e84040;margin-right:6px;">▨</span>IRGC closure zone</div>
+        <div><span style="color:#4ea1f3;margin-right:6px;">▨</span>US Navy blockade zone</div>
+        <div>💥 Tanker attack site</div>
+      </div>`;
+    return div;
+  };
+  legend.addTo(map);
+})();
+</script>
+
+<!-- NEWS SECTION -->
+<section class="section" id="news">
+  <div class="section-header">
+    <span class="section-label">02</span>
+    <h2 class="section-title">LATEST POSTS — MIDDLE EAST</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="news-container">
+    <div class="news-topbar">
+      <svg class="x-logo" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.742l7.683-8.769L2.25 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+      </svg>
+      <span class="news-topbar-label">Recent posts — #Hormuz #Iran #OilCrisis</span>
+      <span class="news-topbar-tag">SCROLL TO READ MORE</span>
+    </div>
+    <div class="news-list" role="feed" aria-label="Latest news posts about Hormuz crisis">
+
+      <article class="news-post">
+        <div class="news-post-meta">
+          <div class="news-avatar">R</div>
+          <div>
+            <div class="news-name">Reuters</div>
+            <div class="news-handle">@Reuters</div>
+          </div>
+          <span class="news-timestamp">2h ago</span>
+        </div>
+        <p class="news-body">Iran's IRGC warns: any vessel approaching the Strait of Hormuz will be considered "cooperation with the enemy." Tanker AIS signals near zero. Oil markets volatile ahead of Asia market open.</p>
+        <div class="news-tags">
+          <span class="news-tag danger">#Hormuz</span>
+          <span class="news-tag danger">#Iran</span>
+          <span class="news-tag warn">#OilCrisis</span>
+        </div>
+      </article>
+
+      <article class="news-post">
+        <div class="news-post-meta">
+          <div class="news-avatar">BB</div>
+          <div>
+            <div class="news-name">BBC Breaking</div>
+            <div class="news-handle">@BBCBreaking</div>
+          </div>
+          <span class="news-timestamp">4h ago</span>
+        </div>
+        <p class="news-body">At least three oil tankers fired upon over the weekend. One Indian-flagged vessel was struck twice while attempting to exit the Persian Gulf. New Delhi has summoned the Iranian ambassador to protest the incident.</p>
+        <div class="news-tags">
+          <span class="news-tag danger">#TankerAttack</span>
+          <span class="news-tag">#India</span>
+          <span class="news-tag">#MiddleEast</span>
+        </div>
+      </article>
+
+      <article class="news-post">
+        <div class="news-post-meta">
+          <div class="news-avatar">BL</div>
+          <div>
+            <div class="news-name">Bloomberg</div>
+            <div class="news-handle">@business</div>
+          </div>
+          <span class="news-timestamp">6h ago</span>
+        </div>
+        <p class="news-body">Brent crude surges 6% as Hormuz traffic stalls again after a brief Saturday opening. Asian refineries face a supply crunch — heavily dependent on Middle East crude. "The supply crunch in Asia is bigger than anywhere else," — Kpler analyst.</p>
+        <div class="news-tags">
+          <span class="news-tag warn">#BrentCrude</span>
+          <span class="news-tag warn">#OilPrice</span>
+          <span class="news-tag">#Energy</span>
+        </div>
+      </article>
+
+      <article class="news-post">
+        <div class="news-post-meta">
+          <div class="news-avatar">AJ</div>
+          <div>
+            <div class="news-name">Al Jazeera</div>
+            <div class="news-handle">@AJEnglish</div>
+          </div>
+          <span class="news-timestamp">8h ago</span>
+        </div>
+        <p class="news-body">"Uncertainty is the name of the game" — Al Jazeera correspondent from Tehran. Iran demands end to US blockade of Iranian ports before any commercial ships are allowed through the strait. Iran-US talks remain "far from breakthrough."</p>
+        <div class="news-tags">
+          <span class="news-tag">#Iran</span>
+          <span class="news-tag">#USIran</span>
+          <span class="news-tag">#Diplomacy</span>
+        </div>
+      </article>
+
+      <article class="news-post">
+        <div class="news-post-meta">
+          <div class="news-avatar">CN</div>
+          <div>
+            <div class="news-name">CNBC Markets</div>
+            <div class="news-handle">@CNBCFastMoney</div>
+          </div>
+          <span class="news-timestamp">10h ago</span>
+        </div>
+        <p class="news-body">Tanker transit data from Kpler: only 7 ships crossed Monday vs approximately 90 per day pre-crisis — a 92% drop. Final pre-closure cargoes of Iraqi crude are reaching Asian destinations this week. Supply disruption is now materializing in refinery run-rate cuts.</p>
+        <div class="news-tags">
+          <span class="news-tag">#Shipping</span>
+          <span class="news-tag warn">#Tankers</span>
+          <span class="news-tag">#Kpler</span>
+        </div>
+      </article>
+
+      <article class="news-post">
+        <div class="news-post-meta">
+          <div class="news-avatar">WH</div>
+          <div>
+            <div class="news-name">White House</div>
+            <div class="news-handle">@WhiteHouse</div>
+          </div>
+          <span class="news-timestamp">12h ago</span>
+        </div>
+        <p class="news-body">Trump: "The blockade of Iranian ports is going to remain." President also warned renewed airstrikes may resume if ceasefire expires Wednesday without extension. JD Vance confirmed Islamabad talks with Iran failed on April 12.</p>
+        <div class="news-tags">
+          <span class="news-tag danger">#Trump</span>
+          <span class="news-tag">#USPolicy</span>
+          <span class="news-tag danger">#Iran</span>
+        </div>
+      </article>
+
+      <article class="news-post">
+        <div class="news-post-meta">
+          <div class="news-avatar">UK</div>
+          <div>
+            <div class="news-name">UKMTO</div>
+            <div class="news-handle">@UK_MTO</div>
+          </div>
+          <span class="news-timestamp">14h ago</span>
+        </div>
+        <p class="news-body">ADVISORY: Three tankers reported being fired upon in the strait vicinity. Vessels are advised to exercise extreme caution. Masters should report all incidents immediately. War risk insurance premiums remain at 0.4%+ per transit — a 3x increase from pre-crisis levels.</p>
+        <div class="news-tags">
+          <span class="news-tag danger">#Maritime</span>
+          <span class="news-tag danger">#WarRisk</span>
+          <span class="news-tag">#Safety</span>
+        </div>
+      </article>
+
+      <article class="news-post">
+        <div class="news-post-meta">
+          <div class="news-avatar">AP</div>
+          <div>
+            <div class="news-name">AP News</div>
+            <div class="news-handle">@AP</div>
+          </div>
+          <span class="news-timestamp">16h ago</span>
+        </div>
+        <p class="news-body">China, Russia, India, Iraq, Pakistan, Malaysia, Thailand and Philippines have received Iran's permission to transit the strait after diplomatic talks — but practical conditions and safety risks mean traffic remains minimal.</p>
+        <div class="news-tags">
+          <span class="news-tag">#China</span>
+          <span class="news-tag">#India</span>
+          <span class="news-tag">#Diplomacy</span>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- OIL PRICE CHART -->
+<section class="section" id="oil">
+  <div class="section-header">
+    <span class="section-label">03</span>
+    <h2 class="section-title">BRENT CRUDE OIL PRICE</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="chart-container">
+    <div class="chart-header">
+      <div>
+        <div class="chart-price">$101.40</div>
+        <div class="chart-price-sub">BRENT CRUDE — USD / BARREL — APR 21, 2026</div>
+      </div>
+      <div style="text-align:right">
+        <div class="chart-change-pos">+6.2% today</div>
+        <div class="chart-change-label">Pre-crisis baseline: ~$72 (Feb 1, 2026)</div>
+        <div class="chart-change-label" style="margin-top:4px;color:var(--red)">+40.5% since crisis began</div>
+      </div>
+    </div>
+    <div class="chart-inner">
+      <canvas id="oilChart"
+        role="img"
+        aria-label="Brent crude oil price chart from February to April 2026, showing sharp spike from $72 to over $100 following Strait of Hormuz closure on Feb 28, 2026">
+        Brent crude price: started at ~$72 pre-crisis, spiked to $112 in March, currently $101 after volatility.
+      </canvas>
+    </div>
+    <p class="chart-note">Indicative data based on reported market prices. Not financial advice. Source: CME / Reuters market reports.</p>
+  </div>
+</section>
+
+<!-- TIMELINE -->
+<section class="section" id="timeline">
+  <div class="section-header">
+    <span class="section-label">04</span>
+    <h2 class="section-title">CRISIS TIMELINE</h2>
+    <div class="section-line"></div>
+  </div>
+  <ul class="timeline" role="list">
+    <li class="tl-item">
+      <div class="tl-date">Feb 1, 2026</div>
+      <p class="tl-text">Brent crude at ~$72/bbl. Strait of Hormuz fully open. War risk insurance at baseline 0.125% per transit.</p>
+    </li>
+    <li class="tl-item warning">
+      <div class="tl-date">Feb 15–20, 2026</div>
+      <p class="tl-text">Iran rapidly increases oil exports 3× above normal rate, reduces storage. Saudi Arabia follows. War risk premiums rise to 0.2–0.4%. Markets sense escalation.</p>
+    </li>
+    <li class="tl-item critical">
+      <div class="tl-date">Feb 28, 2026 — Operation Epic Fury</div>
+      <p class="tl-text">United States and Israel launch coordinated airstrikes on Iran targeting military facilities, nuclear sites, and leadership. Supreme Leader Khamenei assassinated. Iran retaliates with missile and drone strikes on Israel, US bases, and Gulf states.</p>
+    </li>
+    <li class="tl-item critical">
+      <div class="tl-date">Mar 2, 2026</div>
+      <p class="tl-text">IRGC senior official officially confirms the Strait of Hormuz is closed. No AIS tanker signals broadcast from the strait. Iran threatens any ship attempting passage. Brent crude surges past $100.</p>
+    </li>
+    <li class="tl-item">
+      <div class="tl-date">Mar 7–28, 2026</div>
+      <p class="tl-text">21+ confirmed attacks on merchant ships. Iran gradually grants passage rights to vessels from China, Russia, India, Iraq, Pakistan, Malaysia, Thailand, and Philippines after bilateral talks.</p>
+    </li>
+    <li class="tl-item warning">
+      <div class="tl-date">Apr 7, 2026</div>
+      <p class="tl-text">Trump agrees to ceasefire deal in exchange for Iran fully opening the strait. Lebanon ceasefire announced — 10-day window begins.</p>
+    </li>
+    <li class="tl-item critical">
+      <div class="tl-date">Apr 12, 2026</div>
+      <p class="tl-text">JD Vance announces Islamabad talks between US and Iran delegation failed. Trump declares US naval blockade of the Strait of Hormuz — US Navy to prevent ships from entering or exiting Iranian ports.</p>
+    </li>
+    <li class="tl-item warning">
+      <div class="tl-date">Apr 17, 2026 — Brief opening</div>
+      <p class="tl-text">Iran's FM Araghchi declares the strait "completely open" in line with Lebanon ceasefire. Several tankers attempt transit. Oil futures fall 9–12% on the announcement.</p>
+    </li>
+    <li class="tl-item critical">
+      <div class="tl-date">Apr 18, 2026 — Reclosure</div>
+      <p class="tl-text">Iran fires on Indian-flagged tankers attempting transit. India summons Iranian ambassador. Iran's IRGC Navy officially reinstates closure: "No vessel should make any movement." Brent rebounds +6%.</p>
+    </li>
+    <li class="tl-item critical">
+      <div class="tl-date">Apr 21, 2026 — Today</div>
+      <p class="tl-text">Strait effectively closed. US naval blockade of Iranian ports active. Diplomatic talks at impasse. Ceasefire expires Wednesday. Oil supply crunch materializing in Asian refineries.</p>
+    </li>
+  </ul>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Is<span>Hormuz</span>Opened.info</div>
+  <div class="footer-note">
+    Status based on publicly available maritime &amp; news sources.<br>
+    Ship tracking: MarineTraffic AIS · Oil data: CME / Reuters<br>
+    Not financial advice. Updated regularly.
+  </div>
+</footer>
+
+<!-- CHART.JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+  // Oil price chart data
+  const labels = [
+    'Feb 1','Feb 5','Feb 10','Feb 15','Feb 20','Feb 25','Feb 28',
+    'Mar 2','Mar 5','Mar 10','Mar 15','Mar 20','Mar 25','Mar 28',
+    'Apr 1','Apr 5','Apr 7','Apr 10','Apr 12','Apr 15','Apr 17','Apr 18','Apr 20','Apr 21'
+  ];
+  const prices = [
+    72.4, 71.9, 72.8, 73.5, 74.2, 76.1, 89.2,
+    101.6, 107.4, 112.3, 110.8, 109.4, 107.1, 106.8,
+    105.2, 103.9, 96.1, 99.4, 102.7, 101.1, 83.9, 97.2, 95.5, 101.4
+  ];
+
+  // Crisis zones for annotation via plugin-free approach
+  const ctx = document.getElementById('oilChart').getContext('2d');
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Brent Crude (USD/bbl)',
+          data: prices,
+          borderColor: '#f0a500',
+          backgroundColor: (context) => {
+            const chart = context.chart;
+            const { ctx: c, chartArea } = chart;
+            if (!chartArea) return 'transparent';
+            const gradient = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+            gradient.addColorStop(0, 'rgba(240,165,0,0.18)');
+            gradient.addColorStop(1, 'rgba(240,165,0,0.0)');
+            return gradient;
+          },
+          borderWidth: 2,
+          pointRadius: 2,
+          pointHoverRadius: 6,
+          pointBackgroundColor: '#f0a500',
+          fill: true,
+          tension: 0.35
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { intersect: false, mode: 'index' },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0d0d0d',
+          borderColor: '#2a2a2a',
+          borderWidth: 1,
+          titleColor: '#666',
+          titleFont: { family: "'IBM Plex Mono', monospace", size: 11 },
+          bodyColor: '#f0a500',
+          bodyFont: { family: "'IBM Plex Mono', monospace", size: 13 },
+          padding: 10,
+          callbacks: {
+            title: items => items[0].label,
+            label: item => ' $' + item.parsed.y.toFixed(2) + ' / bbl'
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: '#888',
+            font: { family: "'IBM Plex Mono', monospace", size: 9 },
+            maxRotation: 45,
+            autoSkip: true,
+            maxTicksLimit: 12
+          },
+          grid: { color: 'rgba(255,255,255,0.06)' },
+          border: { color: '#2a2a2a' }
+        },
+        y: {
+          min: 60,
+          max: 125,
+          ticks: {
+            color: '#888',
+            font: { family: "'IBM Plex Mono', monospace", size: 10 },
+            callback: v => '$' + Math.round(v)
+          },
+          grid: { color: 'rgba(255,255,255,0.06)' },
+          border: { color: '#2a2a2a' }
+        }
+      }
+    }
+  });
+
+  // Draw crisis line annotation manually via plugin
+  Chart.register({
+    id: 'crisis-line',
+    afterDraw(chart) {
+      const { ctx: c, scales: { x, y } } = chart;
+      // Feb 28 crisis start — index 6
+      const crisisX = x.getPixelForValue(6);
+      c.save();
+      c.beginPath();
+      c.moveTo(crisisX, y.top);
+      c.lineTo(crisisX, y.bottom);
+      c.strokeStyle = 'rgba(232,64,64,0.4)';
+      c.lineWidth = 1;
+      c.setLineDash([4, 4]);
+      c.stroke();
+      c.setLineDash([]);
+      c.fillStyle = 'rgba(232,64,64,0.75)';
+      c.font = "9px 'IBM Plex Mono', monospace";
+      c.fillText('FEB 28 — CRISIS', crisisX + 4, y.top + 14);
+      c.restore();
+    }
+  });
+
+  // Status toggle logic
+  // Change HORMUZ_OPEN to true when the strait is open to update the page automatically
+  const HORMUZ_OPEN = false;
+
+  if (HORMUZ_OPEN) {
+    document.getElementById('main-answer').textContent = 'YES';
+    document.getElementById('main-answer').classList.add('yes');
+    document.getElementById('hero-glow').classList.add('yes');
+    document.getElementById('hero-status').classList.add('yes');
+    document.getElementById('status-text').textContent = 'Strait open — commercial traffic permitted';
+    document.getElementById('hero-desc').textContent =
+      'The Strait of Hormuz is currently open to commercial tanker traffic. Monitor the live map below for real-time vessel positions.';
+  }
+</script>
+</body>
+</html>
