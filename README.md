@@ -1,0 +1,2 @@
+# IsOrmuzOpened
+IsOrmuzOpened
